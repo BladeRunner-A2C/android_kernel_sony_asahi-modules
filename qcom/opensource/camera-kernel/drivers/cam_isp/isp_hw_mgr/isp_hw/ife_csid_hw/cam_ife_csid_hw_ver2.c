@@ -56,7 +56,7 @@
 /* Max sensor switch out of sync threshold */
 #define CAM_IFE_CSID_MAX_OUT_OF_SYNC_ERR_COUNT         3
 
-#define CAM_CSID_IRQ_CTRL_NAME_LEN                     10
+#define CAM_CSID_IRQ_CTRL_NAME_LEN                     15
 
 static void cam_ife_csid_ver2_print_debug_reg_status(
 	struct cam_ife_csid_ver2_hw *csid_hw,

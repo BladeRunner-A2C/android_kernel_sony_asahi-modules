@@ -33,13 +33,13 @@ static int cam_io_tpg_dump(void __iomem *base_addr,
 	p_str = line_str;
 	for (i = 0; i < size; i++) {
 		if (i % NUM_REGISTER_PER_LINE == 0) {
-			snprintf(p_str, 12, "0x%08x: ",
+			snprintf(p_str, 13, "0x%08x: ",
 				REG_OFFSET(start_offset, i));
-			p_str += 11;
+			p_str += 12;
 		}
 		data = cam_io_r(base_addr + REG_OFFSET(start_offset, i));
-		snprintf(p_str, 9, "%08x ", data);
-		p_str += 8;
+		snprintf(p_str, 10, "%08x ", data);
+		p_str += 9;
 		if ((i + 1) % NUM_REGISTER_PER_LINE == 0) {
 			CAM_DBG(CAM_TPG, "%s", line_str);
 			line_str[0] = '\0';
