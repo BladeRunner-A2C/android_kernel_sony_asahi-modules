@@ -140,6 +140,10 @@ static char *dp_display_state_name(enum dp_display_states state)
 }
 
 static struct dp_display *g_dp_display;
+#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
+struct device virtualdev;
+#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
+
 #define HPD_STRING_SIZE 30
 
 struct dp_hdcp_dev {
@@ -220,12 +224,155 @@ struct dp_display_private {
 	bool pm_qos_requested;
 
 	struct notifier_block usb_nb;
+#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
+	u32 dp_stop_state;
+#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
 };
 
 static const struct of_device_id dp_dt_match[] = {
 	{.compatible = "qcom,dp-display"},
 	{}
 };
+
+#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
+static bool dp_is_sony_acc_vm(struct dp_display_private *dp)
+{
+	struct dp_panel *panel = dp->panel;
+	bool ret = false;
+
+	// Identify sony accessory vm (DPver1.1/1.6Gxlane2/DFP02)
+	ret = (panel->link_info.revision == 0x11 &&
+	       panel->link_info.rate == 162000 &&
+	       panel->link_info.num_lanes == 2 &&
+	       panel->dfp_type == 2);
+
+	DP_DEBUG_V("dp_is_sony_vm(ret=%d, rev=%02x, rate=%d, lanes=%d, dfp_type=%d)\n",
+		 ret,
+		 panel->link_info.revision,
+		 panel->link_info.rate,
+		 panel->link_info.num_lanes,
+		 panel->dfp_type);
+
+	return ret;
+}
+
+static ssize_t dp_display_dp_stop_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dp_display_private *dp;
+
+	if (dev == NULL) {
+		pr_err("invalid dev\n");
+		return -EINVAL;
+	}
+
+	dp = dev_get_drvdata(dev);
+	if (dp == NULL) {
+		pr_err("no driver data found\n");
+		return -ENODEV;
+	}
+
+	return scnprintf(buf, PAGE_SIZE, "%08x\n", dp->dp_stop_state);
+}
+
+static int dp_display_usbpd_configure_cb(struct device *dev);
+static int dp_display_usbpd_disconnect_cb(struct device *dev);
+
+static ssize_t dp_display_dp_stop_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct dp_display_private *dp;
+	u32 pre_state;
+
+	if (dev == NULL) {
+		pr_err("invalid dev\n");
+		return -EINVAL;
+	}
+
+	dp = dev_get_drvdata(dev);
+	if (dp == NULL) {
+		pr_err("no driver data found\n");
+		return -ENODEV;
+	}
+
+	pre_state = dp->dp_stop_state;
+
+	if (kstrtou32(buf, 0, &dp->dp_stop_state) < 0) {
+		pr_err("sscanf failed to set dp_stop_state\n");
+		return -EINVAL;
+	}
+	pr_info("%s: dp_stop_state (%d => %d)\n",
+		__func__, pre_state, dp->dp_stop_state);
+
+	if (pre_state != dp->dp_stop_state && dp->hpd->hpd_high &&
+	    !dp_is_sony_acc_vm(dp)) {
+		if (dp->dp_stop_state) {
+			/* Stop DP */
+			pr_info("Disconnect DP by Thermal\n");
+			dp_display_usbpd_disconnect_cb(dev);
+		}
+		else {
+			/* Re-Connect DP */
+			pr_info("Re-Configured DP by Thermal\n");
+			dp_display_usbpd_configure_cb(dev);
+		}
+	}
+
+	return count;
+}
+
+static struct device_attribute dp_attributes[] = {
+	__ATTR(dp_is_stopped, 0664,
+		dp_display_dp_stop_show,
+		dp_display_dp_stop_store),
+};
+
+static int dp_display_register_attributes(struct device *dev)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(dp_attributes); i++)
+		if (device_create_file(dev, dp_attributes + i))
+			goto error;
+	return 0;
+
+error:
+	dev_err(dev, "%s: Unable to create interface\n", __func__);
+
+	for (--i; i >= 0 ; i--)
+		device_remove_file(dev, dp_attributes + i);
+	return -ENODEV;
+}
+
+int dp_display_create_fs(struct dp_display_private *dp)
+{
+	int rc = 0;
+	char *path_name = "drm_dp";
+
+	if (dp == NULL) {
+		pr_err("no driver data found\n");
+		return -ENODEV;
+	}
+
+	dev_set_name(&virtualdev, "%s", path_name);
+
+	rc = device_register(&virtualdev);
+	if (rc) {
+		pr_err("%s: device_register failed rc = %d\n", __func__, rc);
+		goto err;
+	}
+
+	rc = dp_display_register_attributes(&virtualdev);
+	if (rc) {
+		device_unregister(&virtualdev);
+		goto err;
+	}
+	dev_set_drvdata(&virtualdev, dp);
+
+err:
+	return rc;
+}
+#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
 
 static inline bool dp_display_is_hdcp_enabled(struct dp_display_private *dp)
 {
@@ -1340,6 +1487,14 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 	if (rc == -ETIMEDOUT || rc == -ENOTCONN)
 		goto err_unready;
 
+#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
+	/* check for stop_state */
+	if (dp->dp_stop_state && !dp_is_sony_acc_vm(dp)) {
+		pr_info("dp is stopped (state=%08x)\n", dp->dp_stop_state);
+		goto err_unready;
+	}
+
+#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
 	dp->link->process_request(dp->link);
 	dp->panel->handle_sink_request(dp->panel);
 
@@ -2384,6 +2539,14 @@ static int dp_display_post_init(struct dp_display *dp_display)
 		goto end;
 	}
 
+#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
+	rc = dp_display_create_fs(dp);
+	if (rc) {
+		pr_err("sysfs create dir failed, rc = %d\n", rc);
+		goto end;
+	}
+#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
+
 	rc = dp_init_sub_modules(dp);
 	if (rc)
 		goto end;
@@ -3098,6 +3261,70 @@ end:
 	return rc;
 }
 
+#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
+static uint dp_validate_mode;
+module_param_named(dp_validate_mode, dp_validate_mode, uint, 0644);
+MODULE_PARM_DESC(dp_validate_mode, "dp validate mode");
+
+static enum drm_mode_status dp_validate_mode_ext(
+				struct drm_display_mode *mode)
+{
+	enum drm_mode_status mode_status = MODE_BAD;
+	int vrefresh = drm_mode_vrefresh(mode);
+
+	switch (dp_validate_mode) {
+	case 0: /* default valid for Preferred or multi of 30Hz */
+		if (vrefresh % 30 == 0)
+			mode_status = MODE_OK;
+		break;
+	case 1: /* valid for high resolution 30Hz/60Hz */
+		mode->type &= ~DRM_MODE_TYPE_PREFERRED;
+		if (vrefresh == 30 ||
+		    vrefresh == 60)
+			mode_status = MODE_OK;
+		break;
+	case 2: /* valid for FHD/120Hz */
+		mode->type &= ~DRM_MODE_TYPE_PREFERRED;
+		if (mode->hdisplay <= 1920 && mode->vdisplay <= 1080 &&
+		     vrefresh == 120)
+			mode_status = MODE_OK;
+		break;
+	case 3: /* valid for up to FHD/60Hz only */
+		mode->type &= ~DRM_MODE_TYPE_PREFERRED;
+		if (mode->hdisplay <= 1920 && mode->vdisplay <= 1080 &&
+		    vrefresh == 60)
+			mode_status = MODE_OK;
+		break;
+	case 4: /* valid for 24/25 Hz only (Test) */
+		mode->type &= ~DRM_MODE_TYPE_PREFERRED;
+		if (vrefresh == 24 ||
+		    vrefresh == 25)
+			mode_status = MODE_OK;
+		break;
+	case 5: /* valid for 30 Hz only (Test) */
+		mode->type &= ~DRM_MODE_TYPE_PREFERRED;
+		if (vrefresh == 30)
+			mode_status = MODE_OK;
+		break;
+	case 6: /* valid for 90 Hz only (Test) */
+		mode->type &= ~DRM_MODE_TYPE_PREFERRED;
+		if (vrefresh == 90)
+			mode_status = MODE_OK;
+		break;
+	case 7: /* valid for 144 Hz only (Test) */
+		mode->type &= ~DRM_MODE_TYPE_PREFERRED;
+		if (vrefresh == 144)
+			mode_status = MODE_OK;
+		break;
+	default:
+		mode_status =  MODE_OK;
+		break;
+	}
+
+	return mode_status;
+}
+#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
+
 static enum drm_mode_status dp_display_validate_mode(
 		struct dp_display *dp_display,
 		void *panel, struct drm_display_mode *mode,
@@ -3154,6 +3381,15 @@ static enum drm_mode_status dp_display_validate_mode(
 	rc = dp_display_validate_pixel_clock(dp_mode, dp_display->max_pclk_khz);
 	if (rc)
 		goto end;
+
+#ifdef CONFIG_DRM_SDE_SPECIFIC_PANEL
+	if (dp_is_sony_acc_vm(dp))
+		goto skip_validation;
+
+	mode_status = dp_validate_mode_ext(mode);
+	if (mode_status != MODE_OK)
+		goto end;
+#endif /* CONFIG_DRM_SDE_SPECIFIC_PANEL */
 
 skip_validation:
 	mode_status = MODE_OK;
