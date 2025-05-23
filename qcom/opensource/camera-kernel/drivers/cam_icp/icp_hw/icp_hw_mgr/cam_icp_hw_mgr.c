@@ -2930,6 +2930,7 @@ static int cam_icp_mgr_trigger_recovery(struct cam_icp_hw_mgr *hw_mgr)
 			"[%s] Fail to report system failure to userspace due to no active ctx",
 			hw_mgr->hw_mgr_name);
 
+	complete(&hw_mgr->icp_complete);
 	CAM_DBG(CAM_ICP, "[%s] Done", hw_mgr->hw_mgr_name);
 	return rc;
 }
@@ -4631,6 +4632,7 @@ static int cam_icp_mgr_hw_close(void *hw_priv, void *hw_close_args)
 	int rc = 0;
 
 	CAM_DBG(CAM_ICP, "[%s] Enter", hw_mgr->hw_mgr_name);
+	atomic_set(&hw_mgr->recovery, 0);
 	if (!hw_mgr->icp_booted) {
 		CAM_DBG(CAM_ICP, "[%s] hw mgr is already closed", hw_mgr->hw_mgr_name);
 		return 0;
@@ -4793,7 +4795,7 @@ static int cam_icp_mgr_send_fw_init(struct cam_icp_hw_mgr *hw_mgr)
 		msecs_to_jiffies(timeout), CAM_ICP,
 		"[%s] FW response timeout for FW init handle command",
 		hw_mgr->hw_mgr_name);
-	if (!rem_jiffies) {
+	if (!rem_jiffies || atomic_read(&hw_mgr->recovery)) {
 		rc = -ETIMEDOUT;
 		cam_icp_dump_debug_info(hw_mgr, false);
 	}
@@ -4916,6 +4918,18 @@ static int cam_icp_mgr_hw_open_u(void *hw_mgr_priv, void *download_fw_args)
 
 	mutex_lock(&hw_mgr->hw_mgr_mutex);
 	rc = cam_icp_mgr_hw_open(hw_mgr, download_fw_args);
+	if (rc) {
+		CAM_WARN(CAM_ICP, "Retry ICP initialization");
+		rc = cam_icp_mgr_hw_close(hw_mgr, NULL);
+		if (rc) {
+			CAM_ERR(CAM_ICP, "cam_icp_mgr_hw_close() rc:%d", rc);
+		} else {
+			rc = cam_icp_mgr_hw_open(hw_mgr, download_fw_args);
+			if (rc) {
+				CAM_ERR(CAM_ICP, "cam_icp_mgr_hw_open() rc:%d", rc);
+			}
+		}
+	}
 	mutex_unlock(&hw_mgr->hw_mgr_mutex);
 
 	return rc;

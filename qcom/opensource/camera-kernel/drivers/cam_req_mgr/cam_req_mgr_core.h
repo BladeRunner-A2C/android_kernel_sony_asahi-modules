@@ -18,7 +18,13 @@
 #define MAX_REQ_STATE_MONITOR_NUM      108
 #define MAX_DEV_FOR_SPECIAL_OPS        4
 
+/* sony extension begin */
+#if 1
+#define CAM_REQ_MGR_WATCHDOG_TIMEOUT          30000
+#else
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT          1000
+#endif
+/* sony extension end */
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_DEFAULT  5000
 #define CAM_REQ_MGR_WATCHDOG_TIMEOUT_MAX      50000
 #define CAM_REQ_MGR_SCHED_REQ_TIMEOUT         1000
@@ -43,7 +49,13 @@
 
 #define MAXIMUM_LINKS_CAPACITY     8
 
+/* sony extension begin */
+#if 1
+#define MAXIMUM_LINKS_PER_SESSION  8
+#else
 #define MAXIMUM_LINKS_PER_SESSION  4
+#endif
+/* sony extension end */
 
 #define MAXIMUM_RETRY_ATTEMPTS 3
 
