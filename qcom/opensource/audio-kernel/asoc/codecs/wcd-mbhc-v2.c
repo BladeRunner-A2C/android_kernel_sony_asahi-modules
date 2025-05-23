@@ -883,6 +883,9 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		wcd_mbhc_report_plug(mbhc, 1, SND_JACK_UNSUPPORTED);
 #endif /* CONFIG_AUDIO_QGKI */
+		if (mbhc->current_plug == MBHC_PLUG_TYPE_NONE)
+				mbhc->current_plug = MBHC_PLUG_TYPE_GND_MIC_SWAP;
+
 		ret = extcon_set_state_sync(mbhc->extdev, EXTCON_MECHANICAL, 1);
 	} else if (plug_type == MBHC_PLUG_TYPE_HEADSET) {
 		if (mbhc->mbhc_cfg->enable_anc_mic_detect &&
