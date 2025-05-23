@@ -1,0 +1,5 @@
+cirrus_wm_adsp-objs = wm_adsp.o cs_dsp.o
+obj-m += cirrus_wm_adsp.o
+
+cirrus_cs35l45-objs = cs35l45.o cs35l45-tables.o cs35l45-i2c.o
+obj-m += cirrus_cs35l45.o
