@@ -142,6 +142,11 @@ module_entry(
          "CONFIG_DSI_PARSER" : [
             "msm/dsi/dsi_parser.c",
          ],
+         "CONFIG_DRM_SDE_SPECIFIC_PANEL" : [
+            "msm/dsi/dsi_panel_driver.c",
+            "msm/dsi/dsi_panel_driver_hw.c",
+            "msm/dsi/incell.c",
+         ],
          "CONFIG_THERMAL_OF" : [
             "msm/msm_cooling_device.c",
           ],

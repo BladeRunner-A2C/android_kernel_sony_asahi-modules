@@ -30,6 +30,7 @@ def define_pineapple(t, v, lt=None):
             "CONFIG_QTI_HW_FENCE",
             "CONFIG_QCOM_SPEC_SYNC",
             "CONFIG_MSM_EXT_DISPLAY",
+            "CONFIG_DRM_SDE_SPECIFIC_PANEL"
         ],
         lunch_target = lt,
 )
