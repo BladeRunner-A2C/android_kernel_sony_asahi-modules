@@ -3278,7 +3278,7 @@ static int __cam_isp_ctx_reg_upd_in_applied_state(
 				request_id = req->request_id;
 				ctx_isp->reported_req_id = request_id;
 				__cam_isp_ctx_update_event_record(ctx_isp,
-					CAM_ISP_CTX_EVENT_EPOCH, req);
+					CAM_ISP_CTX_EVENT_EPOCH, req, NULL);
 				break;
 			}
 		}
@@ -3600,7 +3600,7 @@ static int __cam_isp_ctx_reg_upd_in_sof(struct cam_isp_context *ctx_isp,
 						request_id = active_req->request_id;
 						ctx_isp->reported_req_id = request_id;
 						__cam_isp_ctx_update_event_record(ctx_isp,
-							CAM_ISP_CTX_EVENT_EPOCH, active_req);
+							CAM_ISP_CTX_EVENT_EPOCH, active_req, NULL);
 						break;
 					}
 				}
@@ -3670,7 +3670,7 @@ static int __cam_isp_ctx_reg_upd_in_bubble(struct cam_isp_context *ctx_isp,
 				request_id = req->request_id;
 				ctx_isp->reported_req_id = request_id;
 				__cam_isp_ctx_update_event_record(ctx_isp,
-					CAM_ISP_CTX_EVENT_EPOCH, req);
+					CAM_ISP_CTX_EVENT_EPOCH, req, NULL);
 				break;
 			}
 		}
@@ -3734,7 +3734,7 @@ static int __cam_isp_ctx_epoch_in_applied(struct cam_isp_context *ctx_isp,
 				"move request %lld to active list(cnt = %d), ctx %u",
 				req->request_id, ctx_isp->active_req_cnt, ctx->ctx_id);
 			__cam_isp_ctx_update_event_record(ctx_isp,
-				CAM_ISP_CTX_EVENT_RUP, req);
+				CAM_ISP_CTX_EVENT_RUP, req, NULL);
 		} else {
 			/* no io config, so the request is completed. */
 			list_add_tail(&req->list, &ctx->free_req_list);
@@ -3997,7 +3997,7 @@ static int __cam_isp_ctx_sof_in_epoch(struct cam_isp_context *ctx_isp,
 				request_id = req->request_id;
 				ctx_isp->reported_req_id = request_id;
 				__cam_isp_ctx_update_event_record(ctx_isp,
-					CAM_ISP_CTX_EVENT_EPOCH, req);
+					CAM_ISP_CTX_EVENT_EPOCH, req, NULL);
 				break;
 			}
 		}
@@ -7056,7 +7056,7 @@ static int __cam_isp_ctx_rdi_only_reg_upd_in_bubble_applied_state(
 			__cam_isp_ctx_substate_val_to_type(
 			ctx_isp->substate_activated));
 		__cam_isp_ctx_update_event_record(ctx_isp,
-			CAM_ISP_CTX_EVENT_RUP, req);
+			CAM_ISP_CTX_EVENT_RUP, req, NULL);
 		ctx_isp->last_sof_timestamp = ctx_isp->sof_timestamp_val;
 	}
 #endif
