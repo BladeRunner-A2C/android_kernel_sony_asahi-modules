@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause WITH Linux-syscall-note) */
 /*
  * linux/sound/cs35l45.h -- Platform data for CS35L45
  *
