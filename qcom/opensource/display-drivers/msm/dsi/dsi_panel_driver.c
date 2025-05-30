@@ -17,8 +17,6 @@
 #include <linux/notifier.h>
 #include <linux/export.h>
 #include <linux/drm_notify.h>
-#include <uapi/fels/fels_common_types.h>
-#include <fels.h>
 #include "dsi_panel_driver.h"
 #include "dsi_panel.h"
 #include "dsi_display.h"
@@ -1874,15 +1872,9 @@ void dsi_panel_driver_oled_short_check_worker(struct work_struct *work)
 		short_det->current_chatter_cnt++;
 		pr_err("%s: Short Detection [%d]\n",
 				__func__, short_det->current_chatter_cnt);
-		fels_debug_log(FELS_CATEGORY_DISPLAY, FELS_LOG_LEVEL_ERROR, "Display short detected");
-		fels_log(FELS_CATEGORY_DISPLAY, FELS_LOG_LEVEL_ERROR, FELS_ERROR_CODE_DISPLAY_SHORT,
-			0, 0, 0, 0);
 		if (short_det->current_chatter_cnt >=
 				SHORT_DEFAULT_TARGET_CHATTER_CNT) {
 			pr_err("%s: execute shutdown.\n", __func__);
-			fels_debug_log(FELS_CATEGORY_DISPLAY, FELS_LOG_LEVEL_ERROR, "Device shutdown");
-			fels_log(FELS_CATEGORY_DISPLAY, FELS_LOG_LEVEL_ERROR, FELS_ERROR_CODE_DISPLAY_SHORT,
-				1, 0, 0, 0);
 
 			/* shutdown */
 			for (;;) {
