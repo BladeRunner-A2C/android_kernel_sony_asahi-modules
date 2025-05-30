@@ -1790,15 +1790,6 @@ static int32_t cam_csiphy_external_cmd(struct csiphy_device *csiphy_dev,
 			lane_assign >>= 4;
 		}
 
-		if (cam_cmd_csiphy_info.secure_mode == 1) {
-			rc = cam_csiphy_update_secure_info(csiphy_dev, index);
-			if (rc) {
-				CAM_ERR(CAM_CSIPHY,
-					"Secure info configuration failed for index: %d", index);
-				goto reset_settings;
-			}
-		}
-
 		CAM_DBG(CAM_CSIPHY,
 			"phy version:%d, phy_idx: %d, preamble_en: %u",
 			csiphy_dev->hw_version,
