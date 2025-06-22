@@ -214,7 +214,11 @@ SND_SOC_DAILINK_DEFS(rx_dma_rx5,
 SND_SOC_DAILINK_DEFS(rx_dma_rx6,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("lpass-cdc", "rx_macro_rx6"),
+#ifdef ENABLE_SW_HAPTICS
 			   COMP_CODEC("swr-haptics", "swr_haptics")),
+#else
+			   COMP_CODEC("msm-stub-codec.1", "msm-stub-rx")),
+#endif
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
 SND_SOC_DAILINK_DEFS(tx_dma_tx3,
@@ -231,10 +235,14 @@ SND_SOC_DAILINK_DEFS(tx_dma_tx4,
 			   COMP_CODEC("wcd937x_codec", "wcd937x_cdc"),
 			   COMP_CODEC("wcd9378_codec", "wcd9378_cdc"),
 			   COMP_CODEC("wcd939x_codec", "wcd939x_cdc"),
+#ifdef ENABLE_SW_DMICS
 			   COMP_CODEC("swr-dmic.01", "swr_dmic_tx0"),
 			   COMP_CODEC("swr-dmic.02", "swr_dmic_tx1"),
 			   COMP_CODEC("swr-dmic.03", "swr_dmic_tx2"),
 			   COMP_CODEC("swr-dmic.04", "swr_dmic_tx3")),
+#else
+			   COMP_CODEC("msm-stub-codec.1", "msm-stub-rx")),
+#endif
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
 SND_SOC_DAILINK_DEFS(va_dma_tx0,
@@ -324,12 +332,22 @@ SND_SOC_DAILINK_DEFS(quin_mi2s_tx,
 
 SND_SOC_DAILINK_DEFS(sen_mi2s_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
+#ifdef ENABLE_WSA
 	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-rx")),
+#else
+	DAILINK_COMP_ARRAY(COMP_CODEC("cs35l45_l", "cs35l45"),
+			   COMP_CODEC("cs35l45_r", "cs35l45")),
+#endif
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
 SND_SOC_DAILINK_DEFS(sen_mi2s_tx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
+#ifdef ENABLE_WSA
 	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-tx")),
+#else
+	DAILINK_COMP_ARRAY(COMP_CODEC("cs35l45_l", "cs35l45"),
+			   COMP_CODEC("cs35l45_r", "cs35l45")),
+#endif
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
 SND_SOC_DAILINK_DEFS(sep_mi2s_rx,
