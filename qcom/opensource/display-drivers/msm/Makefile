@@ -3,14 +3,14 @@
 DISPLAY_SELECT := CONFIG_DRM_MSM=m
 
 KBUILD_EXTRA_SYMBOLS := \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/mm-drivers/msm_ext_display/Module.symvers \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/mm-drivers/sync_fence/Module.symvers \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/securemsm-kernel/Module.symvers
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/mm-drivers/msm_ext_display/Module.symvers \
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/mm-drivers/sync_fence/Module.symvers \
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/securemsm-kernel/Module.symvers
 
 ifneq ($(BOARD_PLATFORM), volcano)
 KBUILD_EXTRA_SYMBOLS += \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/mm-drivers/hw_fence/Module.symvers \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/mmrm-driver/Module.symvers
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/mm-drivers/hw_fence/Module.symvers \
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/mmrm-driver/Module.symvers
 endif
 
 KBUILD_OPTIONS += DISPLAY_ROOT=$(KERNEL_SRC)/$(M)/../

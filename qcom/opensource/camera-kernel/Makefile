@@ -5,12 +5,12 @@ KBUILD_OPTIONS += KERNEL_ROOT=$(KERNEL_SRC)
 KBUILD_OPTIONS += MODNAME=camera
 KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_EXTRA_SYMBOLS := \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/mmrm-driver/Module.symvers \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/securemsm-kernel/Module.symvers
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/mmrm-driver/Module.symvers \
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/securemsm-kernel/Module.symvers
 
 ifneq ($(BOARD_PLATFORM), volcano)
 KBUILD_EXTRA_SYMBOLS += \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/synx-kernel/Module.symvers
+    $(OUT_DIR)/../asahi-modules/qcom/opensource/synx-kernel/Module.symvers
 endif
 
 all: modules

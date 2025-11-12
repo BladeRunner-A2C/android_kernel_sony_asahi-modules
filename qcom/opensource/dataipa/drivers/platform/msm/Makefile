@@ -3,7 +3,7 @@ KP_MODULE_ROOT=$(KERNEL_SRC)/$(M)
 endif
 
 KBUILD_OPTIONS+=KBUILD_DTC_INCLUDE=$(KP_MODULE_ROOT)
-KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(OUT_DIR)/../sm8650-modules/qcom/opensource/datarmnet-ext/mem/Module.symvers
+KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(OUT_DIR)/../asahi-modules/qcom/opensource/datarmnet-ext/mem/Module.symvers
 
 all: modules # dtbs
 
